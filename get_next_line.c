@@ -1,135 +1,95 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: github   <github@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2018/04/13 16:57:30 by github            #+#    #+#             */
-/*   Updated: 2018/07/09 18:17:10 by github           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "get_next_line.h"
-#include <stdio.h>
-char			*read_line(char *buf)
-{
-	char		*res;
-	int			i;
 
-	i = 0;
-	while (buf[i] != '\n' && buf[i] != '\0')
-		i++;
-	res = (char *)malloc(sizeof(char *) * (i + 1));
-	res = ft_strncpy(res, buf, i);
-	res[i] = '\0';
-	return (res);
+char    *ft_strsub(char const *s, unsigned int start, size_t len)
+{
+        int             count;
+        char    *nstr;
+
+        if (s == NULL)
+                return (NULL);
+        if ((nstr = (char *)malloc(sizeof(char) * (len + 1))) == NULL)
+                return (NULL);
+        count = 0;
+        while (len > (size_t)count && s[start + count])
+        {
+                nstr[count] = s[start + count];
+                count++;
+        }
+        nstr[count] = '\0';
+        return (nstr);
 }
 
-char             *end_of_file(char **tmp, char **line, int *rd, int mode)
+char    *ft_strsubin(char *out, char **in, char c)
 {
-    char        *s2;
+        char    *tmp;
 
-    if (mode == 0)
-    {
-       if (*rd == 0 && ft_strlen(*tmp) > 0)
-       {
-		   	ft_putendl("/////////////endoffile?/////////////////////");
-           *line = ft_strdup(*tmp);
-           free(*tmp);
-           *tmp = NULL;
-           *rd = 1;
-       }
-       return (NULL);
-    }
-   s2 = ft_strdup(*line);
-   return (ft_strjoinfree(*tmp, s2));
+        *in = ft_strsub(out, 0, ft_strchri(out, c));
+        tmp = ft_strsub(out, ft_strchri(out, c) + 1, ft_strlen(out));
+        free(out);
+        out = ft_strdup(tmp);
+        free(tmp);
+        return (out);
 }
 
-char			*ft_strjoinfree(char *s1, char *s2)
+int             ft_strchri(char *str, char c)
 {
-	char		*final;
-	int			i;
-	int			len;
-	int			j;
+        int count;
 
-	j = 0;
-	if (s1 == NULL || s2 == NULL)
-		return (NULL);
-	len = ft_strlen(s1) + ft_strlen(s2) + 1;
-	i = -1;
-	final = malloc(sizeof(final) * len);
-	if (final == NULL)
-		return (NULL);
-	while (s1[++i] != '\0')
-		final[i] = s1[i];
-	while (s2[j] != '\0')
-		final[i++] = s2[j++];
-	free(s1);
-	free(s2);
-	final[i] = '\0';
-	return (final);
+        count = 0;
+        while (str[count])
+        {
+                if (str[count] == c)
+                        return (count);
+                count++;
+        }
+        return (-1);
 }
 
-int			not_into_the_line(char *tmp, int fd, char* buf, char **line )
+char    *ft_strdup(const char *s1)
 {
-	int rd;
-	printf("%s \n", buf);
-	if ((rd = read(fd, buf, BUFF_SIZE)) < 1)
+        int             len;
+        char    *dup;
+        int             count;
+
+        count = 0;
+        len = ft_strlen(s1);
+        dup = (char*)malloc(((sizeof(char) * len) + 1));
+        if (dup == NULL)
+                return (NULL);
+        while (count < len)
+        {
+                dup[count] = s1[count];
+                count++;
+        }
+        dup[count] = s1[count];
+        return (dup);
+}
+
+int			get_next_line(const int fd, char **line)
+{
+	char		buff[BUFF_SIZE + 1];
+	int			ret;
+	static char	*str[OPEN_MAX + 1];
+
+	if (!(line) || fd < 0 || fd > OPEN_MAX)
+		return (-1);
+	if (fd > -1 && str[fd] && ft_strchri(str[fd], '\n') != -1)
 	{
-		ft_putnbr(rd);
-		ft_putendl("/////////////tu crache la  boucle if avec rd < 1?/////////////////////");
-		free(buf);
-		// ft_strdel(&buf);
-		end_of_file(&tmp, line, &rd, 0);
-		return (rd);
+		str[fd] = ft_strsubin(str[fd], line, '\n');
+		return (1);
 	}
-	ft_putendl("et ici");
-	buf[rd] = '\0';
-	tmp = end_of_file(&tmp, &buf, &rd, 1);
-	printf("len de tmp dans mot into quand on est pas a la fin du fichier : %zu \n", ft_strlen(tmp));
-	return (0);
-}
-
-int				get_next_line(const int fd, char **line)
-{
-	static char	*str = NULL;
-	// int			rd;
-	char		*buf;
-	char		*tmp;
-	int			i;
-
-	i = 0;
-	if (fd < 0 || fd == 2 || !line || BUFF_SIZE <= 0)
-		return (-1);
-	if (!(buf = ft_memalloc(BUFF_SIZE + 1)))
-		return (-1);
-	if (!str)
-		str = ft_memalloc(BUFF_SIZE + 1);
-	tmp = ft_strncpy(ft_memalloc(BUFF_SIZE), str, BUFF_SIZE);
-	ft_bzero(str, BUFF_SIZE + 1);
-	//rd = 0;
-	while (!(ft_strchr(tmp, '\n')))
-		not_into_the_line(tmp,fd,buf,line);
-	// {
-	// 	if ((rd = read(fd, buf, BUFF_SIZE)) < 1)
-	// 	{
-	// 		ft_putnbr(rd);
-	// 		free(buf);
-	// 		end_of_file(&tmp, line, &rd, 0);
-	// 		return (rd);
-	// 	}
-	// 	ft_putnbr(rd);
-	// 	buf[rd] = '\0';
-	// 	tmp = end_of_file(&tmp, &buf, &rd, 1);
-	// }
-	*line = read_line(tmp);
-	if (ft_strchr(tmp, '\n'))
-		str = ft_strncpy(str, ft_strchr(tmp, '\n') + 1, BUFF_SIZE);
-	// ft_putendl("/////////////tu crache la ?/////////////////////");
-	free(tmp);
-	// ft_putendl("/////////////YOUHOU tu crache la ?/////////////////////");
-	ft_strdel(&buf);// free(buf);
-	ft_putendl("/////////////YOUHOU EHOOOOOO tu crache la ?/////////////////////");
-	return (1);
+	if ((ret = read(fd, buff, BUFF_SIZE)) > 0)
+	{
+		buff[ret] = '\0';
+		str[fd] = ((!str[fd]) ? ft_strdup(buff) : ft_strljoin(str[fd], buff));
+		return (get_next_line(fd, line));
+	}
+	if (ret == 0 && str[fd] && str[fd][0])
+	{
+		*line = ft_strdup(str[fd]);
+		free(str[fd]);
+		str[fd] = NULL;
+		return (1);
+	}
+	return (ret > 0 ? 1 : ret);
 }
